@@ -1,30 +1,444 @@
 ---
 layout: post
-title: How I Rest From Work
-date: 2017-09-12 13:32:20 +0300
+title: rabbitmq的使用
+date: 2020-06-29 10:32:20 +0300
 description: You’ll find this post in your `_posts` directory. Go ahead and edit it and re-build the site to see your changes. # Add post description (optional)
 img: i-rest.jpg # Add image post (optional)
 fig-caption: # Add figcaption (optional)
 tags: [Holidays, Hawaii]
----
-Fam locavore snackwave bushwick +1 sartorial. Selfies portland knausgaard synth. Pop-up art party marfa deep v pitchfork subway tile 3 wolf moon. Ennui pinterest tumblr yr, adaptogen succulents copper mug twee. Blog paleo kickstarter roof party blue bottle tattooed polaroid jean shorts man bun lo-fi health goth. Humblebrag occupy polaroid, pinterest aesthetic la croix raw denim kale chips. 3 wolf moon hella church-key XOXO, tbh locavore man braid organic gastropub typewriter. Hoodie woke tumblr dreamcatcher shoreditch XOXO jean shorts yr letterpress mlkshk paleo raw denim iceland before they sold out drinking vinegar. Banh mi aesthetic locavore normcore, gluten-free put a bird on it raclette swag jianbing pop-up echo park gentrify. Stumptown brooklyn godard tumeric ethical. Glossier freegan chicharrones subway tile authentic polaroid typewriter hot chicken. Thundercats small batch heirloom meggings.
 
-## Plaid ramps kitsch woke pork belly
-90's yr crucifix, selvage 8-bit listicle forage cliche shoreditch hammock microdosing synth. Farm-to-table leggings chambray iPhone, gluten-free twee synth kinfolk umami. Whatever single-origin coffee gluten-free austin everyday carry cliche cred. Plaid ramps kitsch woke pork belly organic. Trust fund whatever coloring book kombucha brooklyn. Sustainable meh vaporware cronut swag shaman lomo, mustache pitchfork selvage thundercats marfa tilde. Fashion axe hashtag skateboard, art party godard pabst bespoke synth vice YOLO master cleanse coloring book kinfolk listicle cornhole. Try-hard mixtape umami fanny pack man bun gastropub franzen tbh. Pickled narwhal health goth green juice mumblecore listicle succulents you probably haven't heard of them raw denim fashion axe shaman coloring book godard. Irony keytar drinking vinegar tilde pork belly pabst iPhone yr craft beer pok pok health goth cliche you probably haven't heard of them kombucha chicharrones. Direct trade hella roof party chia. Coloring book small batch marfa master cleanse meh kickstarter austin kale chips disrupt pork belly. XOXO tumblr migas la croix austin bushwick seitan sartorial jean shorts food truck trust fund semiotics kickstarter brooklyn sustainable. Umami knausgaard mixtape marfa. Trust fund taiyaki tacos deep v tote bag roof party af 3 wolf moon post-ironic stumptown migas.
 
-![I and My friends]({{site.baseurl}}/assets/img/we-in-rest.jpg)
+普通生产者消费者模型
+连接类：
+public class MqConnectionUtil {
+	
+	 public static Connection getConnection() throws Exception {
+	        //定义连接工厂
+	        ConnectionFactory factory = new ConnectionFactory();
+	        //设置服务地址
+	        factory.setHost("192.168.217.128");
+	        //端口
+	        factory.setPort(5672);
+	        //设置账号信息，用户名、密码、vhost
+	        factory.setVirtualHost("admintest");
+	        factory.setUsername("admin");
+	        factory.setPassword("admin");
+	        // 通过工程获取连接
+	        Connection connection = factory.newConnection();
+	        return connection;
+	    }
 
-Selfies sriracha taiyaki woke squid synth intelligentsia PBR&B ethical kickstarter art party neutra biodiesel scenester. Health goth kogi VHS fashion axe glossier disrupt, vegan quinoa. Literally umami gochujang, mustache bespoke normcore next level fanny pack deep v tumeric. Shaman vegan affogato chambray. Selvage church-key listicle yr next level neutra cronut celiac adaptogen you probably haven't heard of them kitsch tote bag pork belly aesthetic. Succulents wolf stumptown art party poutine. Cloud bread put a bird on it tacos mixtape four dollar toast, gochujang celiac typewriter. Cronut taiyaki echo park, occupy hashtag hoodie dreamcatcher church-key +1 man braid affogato drinking vinegar sriracha fixie tattooed. Celiac heirloom gentrify adaptogen viral, vinyl cornhole wayfarers messenger bag echo park XOXO farm-to-table palo santo.
+}
+消费者：
+public class Consumer {
+	private final static String QUEUE_NAME = "mq_test_01";
 
->Hexagon shoreditch beard, man braid blue bottle green juice thundercats viral migas next level ugh. Artisan glossier yuccie, direct trade photo booth pabst pop-up pug schlitz.
+    public static void main(String[] argv) throws Exception {
 
-Cronut lumbersexual fingerstache asymmetrical, single-origin coffee roof party unicorn. Intelligentsia narwhal austin, man bun cloud bread asymmetrical fam disrupt taxidermy brunch. Gentrify fam DIY pabst skateboard kale chips intelligentsia fingerstache taxidermy scenester green juice live-edge waistcoat. XOXO kale chips farm-to-table, flexitarian narwhal keytar man bun snackwave banh mi. Semiotics pickled taiyaki cliche cold-pressed. Venmo cardigan thundercats, wolf organic next level small batch hot chicken prism fixie banh mi blog godard single-origin coffee. Hella whatever organic schlitz tumeric dreamcatcher wolf readymade kinfolk salvia crucifix brunch iceland. Literally meditation four loko trust fund. Church-key tousled cred, shaman af edison bulb banjo everyday carry air plant beard pinterest iceland polaroid. Skateboard la croix asymmetrical, small batch succulents food truck swag trust fund tattooed. Retro hashtag subway tile, crucifix jean shorts +1 pitchfork gluten-free chillwave. Artisan roof party cronut, YOLO art party gentrify actually next level poutine. Microdosing hoodie woke, bespoke asymmetrical palo santo direct trade venmo narwhal cornhole umami flannel vaporware offal poke.
+        // 获取到连接以及mq通道
+        Connection connection = MqConnectionUtil.getConnection();
+        // 从连接中创建通道
+        Channel channel = connection.createChannel();
+        // 声明队列
+        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
 
-* Hexagon shoreditch beard
-* Intelligentsia narwhal austin
-* Literally meditation four
-* Microdosing hoodie woke
+        // 定义队列的消费者
+        QueueingConsumer consumer = new QueueingConsumer(channel);
+        // 监听队列
+        channel.basicConsume(QUEUE_NAME, true, consumer);
 
-Wayfarers lyft DIY sriracha succulents twee adaptogen crucifix gastropub actually hexagon raclette franzen polaroid la croix. Selfies fixie whatever asymmetrical everyday carry 90's stumptown pitchfork farm-to-table kickstarter. Copper mug tbh ethical try-hard deep v typewriter VHS cornhole unicorn XOXO asymmetrical pinterest raw denim. Skateboard small batch man bun polaroid neutra. Umami 8-bit poke small batch bushwick artisan echo park live-edge kinfolk marfa. Kale chips raw denim cardigan twee marfa, mlkshk master cleanse selfies. Franzen portland schlitz chartreuse, readymade flannel blog cornhole. Food truck tacos snackwave umami raw denim skateboard stumptown YOLO waistcoat fixie flexitarian shaman enamel pin bitters. Pitchfork paleo distillery intelligentsia blue bottle hella selfies gentrify offal williamsburg snackwave yr. Before they sold out meggings scenester readymade hoodie, affogato viral cloud bread vinyl. Thundercats man bun sriracha, neutra swag knausgaard jean shorts. Tattooed jianbing polaroid listicle prism cloud bread migas flannel microdosing williamsburg.
+        // 获取消息
+        while (true) {
+            QueueingConsumer.Delivery delivery = consumer.nextDelivery();
+            String message = new String(delivery.getBody());
+            System.out.println(" [x] Received '" + message + "'");
+        }
+    }
 
-Echo park try-hard irony tbh vegan pok pok. Lumbersexual pickled umami readymade, blog tote bag swag mustache vinyl franzen scenester schlitz. Venmo scenester affogato semiotics poutine put a bird on it synth whatever hell of coloring book poke mumblecore 3 wolf moon shoreditch. Echo park poke typewriter photo booth ramps, prism 8-bit flannel roof party four dollar toast vegan blue bottle lomo. Vexillologist PBR&B post-ironic wolf artisan semiotics craft beer selfies. Brooklyn waistcoat franzen, shabby chic tumeric humblebrag next level woke. Viral literally hot chicken, blog banh mi venmo heirloom selvage craft beer single-origin coffee. Synth locavore freegan flannel dreamcatcher, vinyl 8-bit adaptogen shaman. Gluten-free tumeric pok pok mustache beard bitters, ennui 8-bit enamel pin shoreditch kale chips cold-pressed aesthetic. Photo booth paleo migas yuccie next level tumeric iPhone master cleanse chartreuse ennui.
+}
+
+生产者：
+public class Producer {
+	
+	private final static String QUEUE_NAME = "mq_test_01";
+
+    public static void main(String[] argv) throws Exception {
+        // 获取到连接以及mq通道
+        Connection connection = MqConnectionUtil.getConnection();
+        // 从连接中创建通道
+        Channel channel = connection.createChannel();
+        
+        // 声明（创建）队列
+        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+
+        // 消息内容
+        String message = "Hello World!";
+        channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
+        System.out.println(" [x] Sent '" + message + "'");
+        //关闭通道和连接
+        channel.close();
+        connection.close();
+    }
+}
+
+Work Queues工作队列模型
+一个生产发送消息到队列，允许有多个消费者接收消息，但是一条消息只会被一个消费者获取。
+生产者：
+public class Producers {
+	private final static String QUEUE_NAME = "mq_test_01";
+
+    public static void main(String[] argv) throws Exception {
+        // 获取到连接以及mq通道
+        Connection connection = MqConnectionUtil.getConnection();
+        // 从连接中创建通道
+        Channel channel = connection.createChannel();
+        
+        // 声明（创建）队列  
+        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+
+        // 消息内容
+        for (int i = 1; i <= 20; i++) {
+            // 消息内容
+            String message = "task .. " + i;
+            channel.basicPublish("", QUEUE_NAME, null, message.getBytes());
+            System.out.println("生产者发送消息：" + message);
+            Thread.sleep(500);
+        }
+        //关闭通道和连接
+        channel.close();
+        connection.close();
+    }
+}
+
+消费者1：
+public class Consumers1 {
+	private final static String QUEUE_NAME = "mq_test_01";
+
+    public static void consume() throws Exception {
+
+        // 获取到连接以及mq通道
+        Connection connection = MqConnectionUtil.getConnection();
+        // 从连接中创建通道
+        Channel channel = connection.createChannel();
+        // 声明队列
+        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+
+        // 定义队列的消费者
+        DefaultConsumer consumer = new DefaultConsumer(channel) {
+        	//消费队列事件监听
+        	@Override
+        	public  void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
+                    byte[] body) throws IOException {
+        		// body 即消息体
+        		String msg = new String(body);
+                System.out.println("消费者1接收到消息：" + msg);
+                
+                try {
+					Thread.sleep(50);
+				} catch (Exception e) {
+				}
+                
+        	}
+        	
+        };
+        channel.basicConsume(QUEUE_NAME, true,consumer);
+    }
+}
+消费者2：
+
+public class Consumers2 {
+	private final static String QUEUE_NAME = "mq_test_01";
+
+    public  static void consume() throws Exception {
+
+        // 获取到连接以及mq通道
+        Connection connection = MqConnectionUtil.getConnection();
+        // 从连接中创建通道
+        Channel channel = connection.createChannel();
+        // 声明队列
+        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+
+        // 定义队列的消费者
+        DefaultConsumer consumer = new DefaultConsumer(channel) {
+        	//消费队列事件监听
+        	@Override
+        	public  void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
+                    byte[] body) throws IOException {
+        		// body 即消息体
+        		String msg = new String(body);
+                System.out.println("消费者2接收到消息：" + msg);
+                
+                try {
+					Thread.sleep(50);
+				} catch (Exception e) {
+				}
+                
+//                channel.basicAck(envelope.getDeliveryTag(), false);
+        	}
+        	
+        };
+        channel.basicConsume(QUEUE_NAME, true,consumer);
+    }
+}
+订阅模型： fanout模型中，生产者发布消息，所有消费者都可以获取所有消息
+1、1个生产者，多个消费者
+2、每一个消费者都有自己的一个队列
+3、生产者没有将消息直接发送到队列，而是发送到了交换机
+4、每个队列都要绑定到交换机
+5、生产者发送的消息，经过交换机到达队列，实现一个消息被多个消费者获取的目的
+
+X（exchange）交换机的类型有以下几种：
+Fanout：广播，交换机将消息发送到所有与之绑定的队列中去
+
+Direct：定向，交换机按照指定的Routing Key发送到匹配的队列中去
+
+Topics：通配符，与Direct大致相同，不同在于Routing Key可以根据通配符进行匹配
+订阅模型之Fanout
+可以有多个消费者，每个消费者都有自己的队列
+每个队列都要与exchange绑定
+生产者发送消息到exchange
+exchange将消息把消息发送到所有绑定的队列中去
+消费者从各自的队列中获取消息
+生产者：
+public class Producers {
+	private final static String EXCHANGE_NAME  = "fanout_exchange";
+
+    public static void main(String[] argv) throws Exception {
+        // 获取到连接以及mq通道
+        Connection connection = MqConnectionUtil.getConnection();
+        // 从连接中创建通道
+        Channel channel = connection.createChannel();
+        
+        // 声明交换机 ，指定类型为fanout
+        channel.exchangeDeclare(EXCHANGE_NAME, "fanout");
+
+        // 消息内容
+        for (int i = 1; i <= 20; i++) {
+            // 消息内容
+            String message = "task .. " + i;
+            channel.basicPublish(EXCHANGE_NAME, "",null, message.getBytes());
+            System.out.println("生产者发送消息：" + message);
+            Thread.sleep(500);
+        }
+        //关闭通道和连接
+        channel.close();
+        connection.close();
+    }
+}
+消费者1：
+public class ConsumersF1 {
+	
+	private static final String QUEUE_NAME = "fanout_queue_1";
+	private static final String EXCHANGE_NAME = "fanout_exchange";
+
+    public static void consume() throws Exception {
+
+        // 获取到连接以及mq通道
+        Connection connection = MqConnectionUtil.getConnection();
+        // 从连接中创建通道
+        Channel channel = connection.createChannel();
+        // 声明队列
+        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+        
+        // 声明exchange，指定类型为fanout
+        channel.exchangeDeclare(EXCHANGE_NAME, "fanout");
+        
+        //消费者将队列与交换机进行绑定
+        channel.queueBind(QUEUE_NAME, EXCHANGE_NAME, "");
+        
+        // 定义队列的消费者
+        DefaultConsumer consumer = new DefaultConsumer(channel) {
+        	//消费队列事件监听
+        	@Override
+        	public  void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
+                    byte[] body) throws IOException {
+        		// body 即消息体
+        		String msg = new String(body);
+                System.out.println("消费者1接收到消息：" + msg);
+                
+                try {
+					Thread.sleep(50);
+				} catch (Exception e) {
+				}
+                
+        	}
+        	
+        };
+        channel.basicConsume(QUEUE_NAME, true,consumer);
+    }
+}
+消费者2：
+public class ConsumersF2 {
+	
+	private static final String QUEUE_NAME = "fanout_queue_2";
+	private static final String EXCHANGE_NAME = "fanout_exchange";
+
+    public static void consume() throws Exception {
+
+        // 获取到连接以及mq通道
+        Connection connection = MqConnectionUtil.getConnection();
+        // 从连接中创建通道
+        Channel channel = connection.createChannel();
+        // 声明队列
+        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+        
+        // 声明exchange，指定类型为fanout
+        channel.exchangeDeclare(EXCHANGE_NAME, "fanout");
+        
+        //消费者将队列与交换机进行绑定
+        channel.queueBind(QUEUE_NAME, EXCHANGE_NAME, "");
+        
+        // 定义队列的消费者
+        DefaultConsumer consumer = new DefaultConsumer(channel) {
+        	//消费队列事件监听
+        	@Override
+        	public  void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
+                    byte[] body) throws IOException {
+        		// body 即消息体
+        		String msg = new String(body);
+                System.out.println("消费者2接收到消息：" + msg);
+                
+                try {
+					Thread.sleep(50);
+				} catch (Exception e) {
+				}
+                
+        	}
+        	
+        };
+        channel.basicConsume(QUEUE_NAME, true,consumer);
+    }
+}
+订阅模型之Direct
+消费者C1的队列与交换机绑定时设置的Routing Key是“error”， 而C2的队列与交换机绑定时设置的Routing Key包括三个：“info”，“error”，“warning”，假如生产者发送一条消息到交换机，并设置消息的Routing Key为“info”，那么交换机只会将消息发送给C2的队列。
+
+
+生产者：
+public class Producers {
+	private final static String EXCHANGE_NAME  = "direct_exchange";
+
+    public static void main(String[] argv) throws Exception {
+        // 获取到连接以及mq通道
+        Connection connection = MqConnectionUtil.getConnection();
+        // 从连接中创建通道
+        Channel channel = connection.createChannel();
+        
+        // 声明交换机 ，指定类型为direct
+        channel.exchangeDeclare(EXCHANGE_NAME, "direct");
+       
+        // 消息内容
+        for (int i = 1; i <= 20; i++) {
+            // 消息内容
+            String message = "task .. " + i;
+            //生产者发送消息时，设置消息的Routing Key:"info"
+            channel.basicPublish(EXCHANGE_NAME, "info",null, message.getBytes());
+            System.out.println("生产者发送消息：" + message);
+            Thread.sleep(500);
+        }
+        //关闭通道和连接
+        channel.close();
+        connection.close();
+    }
+}
+消费者：
+public class ConsumersD1 {
+	
+	private static final String QUEUE_NAME = "direct_queue_1";
+	private static final String EXCHANGE_NAME = "direct_exchange";
+
+    public static void consume() throws Exception {
+
+        // 获取到连接以及mq通道
+        Connection connection = MqConnectionUtil.getConnection();
+        // 从连接中创建通道
+        Channel channel = connection.createChannel();
+        // 声明队列
+        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+        
+        // 声明exchange，指定类型为direct
+        channel.exchangeDeclare(EXCHANGE_NAME, "direct");
+        
+        //消费者将队列与交换机进行绑定
+        channel.queueBind(QUEUE_NAME, EXCHANGE_NAME, "info");
+        
+        // 定义队列的消费者
+        DefaultConsumer consumer = new DefaultConsumer(channel) {
+        	//消费队列事件监听
+        	@Override
+        	public  void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
+                    byte[] body) throws IOException {
+        		// body 即消息体
+        		String msg = new String(body);
+                System.out.println("消费者1接收到消息：" + msg);
+                
+                try {
+					Thread.sleep(50);
+				} catch (Exception e) {
+				}
+                
+        	}
+        	
+        };
+        channel.basicConsume(QUEUE_NAME, true,consumer);
+    }
+}
+public class ConsumersD2 {
+	
+	private static final String QUEUE_NAME = "direct_queue_2";
+	private static final String EXCHANGE_NAME = "direct_exchange";
+
+    public static void consume() throws Exception {
+
+        // 获取到连接以及mq通道
+        Connection connection = MqConnectionUtil.getConnection();
+        // 从连接中创建通道
+        Channel channel = connection.createChannel();
+        // 声明队列
+        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+        
+        // 声明exchange，指定类型为direct
+        channel.exchangeDeclare(EXCHANGE_NAME, "direct");
+        
+        //消费者将队列与交换机进行绑定
+        channel.queueBind(QUEUE_NAME, EXCHANGE_NAME, "error");
+        
+        // 定义队列的消费者
+        DefaultConsumer consumer = new DefaultConsumer(channel) {
+        	//消费队列事件监听
+        	@Override
+        	public  void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties,
+                    byte[] body) throws IOException {
+        		// body 即消息体
+        		String msg = new String(body);
+                System.out.println("消费者2接收到消息：" + msg);
+                
+                try {
+					Thread.sleep(50);
+				} catch (Exception e) {
+				}
+                
+        	}
+        	
+        };
+        channel.basicConsume(QUEUE_NAME, true,consumer);
+    }
+}
+发布订阅之Topics
+Topic类型的Exchange与Direct相比，都是可以根据RoutingKey把消息路由到不同的队列。只不过Topic类型Exchange可以让队列在绑定Routing key 的时候使用通配符
+Routingkey 一般都是有一个或多个单词组成，多个单词之间以”.”分割，例如： item.insert
+通配符规则：
+     #：匹配一个或多个词
+
+     *：匹配不多不少恰好1个词
+
+举例：
+     audit.#：能够匹配audit.irs.corporate 或者 audit.irs
+
+     audit.*：只能匹配audit.irs
+
+Topics生产者代码与Direct大致相同，只不过子声明交换机时，将类型设为topic，
+消费者代码也与Direct大致相同，也是在声明交换机时设置类型为topic
+
+
+
+
